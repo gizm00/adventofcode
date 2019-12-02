@@ -7,7 +7,7 @@ def NegativeModuleMassException(Exception):
     pass
 
 
-def calc_fuel_requirement(module_mass):
+def calc_fuel_requirement(module_mass, fuel_accumulated):
     """
     Given a mass, calculate the fuel required
     to propel the spacecraft
@@ -27,14 +27,15 @@ def calc_fuel_requirement(module_mass):
         # is negative, return 0 fuel required
         # Note: the answer with the day 1 input was the
         # same regardless if this code was used or not
-        # if fuel_req < 0:
-        #     return 0
-        return fuel_req
+        # Oh LOL this is part 2 :D
+        if fuel_req <= 0:
+            return fuel_accumulated
+        return calc_fuel_requirement(fuel_req, fuel_req + fuel_accumulated)
 
 
 def d1_get_total_fuel_required():
     module_masses = get_things_from_file(D1_INPUT_FILE, DataTypes.NUM)
-    return sum([calc_fuel_requirement(mass) for mass in module_masses])
+    return sum([calc_fuel_requirement(mass, 0) for mass in module_masses])
 
 
 if __name__ == "__main__":
