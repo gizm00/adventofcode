@@ -7,7 +7,7 @@ object Day1 extends App {
   val module_list = readFromFile(SOURCE_FILE)
   val fuelRequired = module_list
     .map(_.toInt)
-    .map(calcFuel)
+    .map(calcFuel(_,0))
     .sum
   println(s"Required fuel: ${fuelRequired}")
 
@@ -16,14 +16,14 @@ object Day1 extends App {
     return Source.fromFile(fileName).getLines.toList
   }
 
-  def calcFuel(moduleMass:Int) : Int = {
+  def calcFuel(moduleMass:Int, acc:Int) : Int = {
     if (moduleMass == 0)
-      return 0
+      return acc
     val fuelRequired = (moduleMass/3).toInt - 2
     if (fuelRequired <= 0)
-      return 0
+      return acc
     else
-      return fuelRequired
+      return calcFuel(fuelRequired, acc + fuelRequired)
   }
 
 }
