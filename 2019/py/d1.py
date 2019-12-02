@@ -1,6 +1,6 @@
 from util import get_things_from_file, DataTypes
 
-D1_INPUT_FILE = "./d1_input_module_masses.txt"
+D1_INPUT_FILE = "../input_files/d1_input_module_masses.txt"
 
 
 def NegativeModuleMassException(Exception):
