@@ -1,3 +1,4 @@
+from copy import deepcopy
 from util import get_things_from_file, DataTypes
 
 INPUT_DIR = "../input_files/"
@@ -45,15 +46,15 @@ def d1_get_total_fuel_required():
     return sum([calc_fuel_requirement(mass, 0) for mass in module_masses])
 
 
-def d2_restore_state(program):
+def d2_restore_state(program, pos1=12, pos2=2):
     """
     Restore the state to just before the computer
     caught fire.
     Modify the input program, which since python is pass
     by ref will modify the variable itself
     """
-    program[1] = 12
-    program[2] = 2
+    program[1] = pos1
+    program[2] = pos2
 
 
 def d2_compute_program(program):
@@ -87,12 +88,41 @@ def d2_compute_program(program):
             raise InvalidOpcodeException("Invalid opcode: {}".format(op))
         ptr = ptr + instruction_length
 
+def d2_backcalculate_program_slow(program, target, min_value, max_value):
+    """
+    For Day 2 part 2, modify the source program by changing the values
+    at addresses 1 and 2 to values [min_value:max_value] inclusive until address 0
+    equals the target
+    :param program: list of integers representing Intcode program
+    :param target: integer target value for address 0 of the program
+    :param min_value, max_value: the range of possible integers to replace
+    at address 1 and 2
+    Returns: the quantity 100*program[1]+program[2]
+    """
+    original_program = deepcopy(program)
+    quantity = 0
+    ptr = 0
+    addr1_value = min_value
+    addr2_value = min_value
+    for addr1 in range(min_value, max_value+1):
+        for addr2 in range(min_value, max_value+1):
+            program_calc = deepcopy(original_program)
+            d2_restore_state(program_calc, addr1, addr2)
+            d2_compute_program(program_calc)
+            if program_calc[0] == target:
+                return 100 * program_calc[1] + program_calc[2]
+    
+    raise TargetValuesNotFound("Unable to find noun and verb :(")
+            
+
 
 if __name__ == "__main__":
     # total_fuel_required = d1_get_total_fuel_required()))
     program = []
     with open(D2_INPUT_FILE) as f:
         program = [int(elem) for elem in f.readline().strip().split(",")]
-    d2_restore_state(program)
-    d2_compute_program(program)
-    print("Value at position 0 of program result: {}".format(program[0]))
+    #d2_restore_state(program)
+    #d2_compute_program(program)
+    #print("Value at position 0 of program result: {}".format(program[0]))
+    value = d2_backcalculate_program_slow(program, 19690720, 0, 99)
+    print("quantity for match: {}".format(value))
