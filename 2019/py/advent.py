@@ -6,11 +6,14 @@ D1_INPUT_FILE = INPUT_DIR + "d1_input_module_masses.txt"
 D2_INPUT_FILE = INPUT_DIR + "d2_input_opcodes.txt"
 
 
-def NegativeModuleMassException(BaseException):
+class NegativeModuleMassException(Exception):
     pass
 
 
-def InvalidOpcodeException(BaseException):
+class InvalidOpcodeException(Exception):
+    pass
+    
+class TargetValuesNotFound(Exception):
     pass
 
 
