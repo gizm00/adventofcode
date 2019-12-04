@@ -117,7 +117,64 @@ def d2_backcalculate_program_slow(program, target, min_value, max_value):
     
     raise TargetValuesNotFound("Unable to find noun and verb :(")
             
-
+def d3_find_wire_intersections(routes):
+    """
+    Return the grid location of wire intersections 
+    :param routes: list of wire routes where each route is a 
+    comma separated list of drawing directions
+    i.e. a route R1,U2,L3 is right 1, up 2, left 3
+    Returns: the circuit board and a list of intersection x,y tuples
+    """
+    
+    # ugh wat
+    intersections = []
+    crossings = []
+    circuit_board = []
+    pos_x = 0
+    pos_y = 0
+    
+    for route in routes:
+        for path in route.split(','):
+            x_range_min = None
+            x_range_max = None
+            y_range_min = None
+            y_range_max = None
+            # for each step along a route, check if it is
+            # in the circuit_board already. if so, add that
+            # position to the intersections. If not, 
+            # add that position to the circuit_board
+            delta = int(path[1:])
+            direction = path[0]
+            if direction == 'L':
+                x_range_min = pos_x - delta
+                x_range_max = pos_x + 1
+                pos_x -= delta
+            if direction == 'R':
+                x_range_min = pos_x
+                x_range_max = pos_x + delta + 1
+                pos_x += delta
+            if direction == 'U':
+                y_range_min = pos_y
+                y_range_max = pos_y + delta + 1
+                pos_y += delta
+            if direction == 'D':
+                y_range_max = pos_y + 1
+                y_range_min = pos_y - delta
+                pos_y -= delta
+            
+            if x_range_min is not None:
+                for i in range(x_range_min, x_range_max):
+                    if (i, pos_y) in circuit_board:
+                        intersections.append((i, pos_y))
+                    else:
+                        circuit_board.append((i, pos_y))
+            elif y_range_min is not None:
+                for i in range(y_range_min, y_range_max):
+                    if (pos_x, i) in circuit_board:
+                        intersections.append((pos_x, i))
+                    else:
+                        circuit_board.append((pos_x, i))
+    return circuit_board, intersections
 
 if __name__ == "__main__":
     # total_fuel_required = d1_get_total_fuel_required()))
