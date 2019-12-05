@@ -1,10 +1,12 @@
 from copy import deepcopy
+import logging
 from util import get_things_from_file, DataTypes
 
 INPUT_DIR = "../input_files/"
 D1_INPUT_FILE = INPUT_DIR + "d1_input_module_masses.txt"
 D2_INPUT_FILE = INPUT_DIR + "d2_input_opcodes.txt"
-
+D3_INPUT_FILE = INPUT_DIR + "d3_input_wire_paths.txt"
+logging.basicConfig(level = logging.DEBUG)
 
 class NegativeModuleMassException(Exception):
     pass
@@ -127,13 +129,13 @@ def d3_find_wire_intersections(routes):
     """
     
     # ugh wat
-    intersections = []
-    crossings = []
-    circuit_board = []
-    pos_x = 0
-    pos_y = 0
-    
+    intersections = set()
+    all_routes = []
+    origin = (0,0)
     for route in routes:
+        pos_x = 0
+        pos_y = 0
+        mapped_route = set()
         for path in route.split(','):
             x_range_min = None
             x_range_max = None
@@ -146,43 +148,83 @@ def d3_find_wire_intersections(routes):
             delta = int(path[1:])
             direction = path[0]
             if direction == 'L':
-                x_range_min = pos_x - delta
-                x_range_max = pos_x + 1
+                x_range_max = pos_x - delta - 1
+                x_range_min = pos_x
+                incr = -1
                 pos_x -= delta
-            if direction == 'R':
+            elif direction == 'R':
                 x_range_min = pos_x
                 x_range_max = pos_x + delta + 1
+                incr = 1
                 pos_x += delta
-            if direction == 'U':
+            elif direction == 'U':
                 y_range_min = pos_y
                 y_range_max = pos_y + delta + 1
+                incr = 1
                 pos_y += delta
-            if direction == 'D':
-                y_range_max = pos_y + 1
-                y_range_min = pos_y - delta
+            elif direction == 'D':
+                y_range_min = pos_y
+                y_range_max = pos_y - delta - 1
+                incr = -1
                 pos_y -= delta
             
             if x_range_min is not None:
-                for i in range(x_range_min, x_range_max):
-                    if (i, pos_y) in circuit_board:
-                        intersections.append((i, pos_y))
+                for i in range(x_range_min, x_range_max, incr):
+                    pos = (i, pos_y)
+                    match = [r for r in all_routes if pos in r]
+                    if match:
+                        logging.debug("adding intersection: {}".format(pos))
+                        intersections.add(pos)
                     else:
-                        circuit_board.append((i, pos_y))
+                        mapped_route.add(pos)
             elif y_range_min is not None:
-                for i in range(y_range_min, y_range_max):
-                    if (pos_x, i) in circuit_board:
-                        intersections.append((pos_x, i))
+                for i in range(y_range_min, y_range_max, incr):
+                    pos = (pos_x, i)
+                    match = [r for r in all_routes if pos in r]
+                    if match:
+                        logging.debug("adding intersection: {}".format(pos))
+                        intersections.add(pos)
                     else:
-                        circuit_board.append((pos_x, i))
-    return circuit_board, intersections
+                        mapped_route.add(pos)
+        
+        all_routes.append(mapped_route)
+    intersections.remove(origin)
+    return all_routes, intersections
+    
+def d3_compute_closest_distance(intersections):
+    """
+    Find the shortest manhattan distance from the
+    intersections to the origin (0,0)
+    Keep in mind some tuples in the intersections list
+    could be negative so take the abs when computing the distance
+    :param intersections: list of (x,y) tuples
+    """
+    min_distance = None
+    if len(intersections) == 0:
+        print("no wire crossings found!")
+        return 0
+    else:
+        for point in intersections:
+            distance = abs(point[0]) + abs(point[1])
+            if min_distance is None:
+                min_distance = distance
+            elif distance < min_distance:
+                logging.debug("updating min_distance to {}".format(min_distance))
+                min_distance = distance
+        return min_distance
+        
+def d3_find_min_distance_wire_crossing(routes):
+    board, intersections = d3_find_wire_intersections(routes)
+    return d3_compute_closest_distance(intersections)
 
 if __name__ == "__main__":
     # total_fuel_required = d1_get_total_fuel_required()))
     program = []
-    with open(D2_INPUT_FILE) as f:
-        program = [int(elem) for elem in f.readline().strip().split(",")]
+    with open(D3_INPUT_FILE) as f:
+        program = f.readlines()
     #d2_restore_state(program)
     #d2_compute_program(program)
     #print("Value at position 0 of program result: {}".format(program[0]))
-    value = d2_backcalculate_program_slow(program, 19690720, 0, 99)
-    print("quantity for match: {}".format(value))
+    #value = d2_backcalculate_program_slow(program, 19690720, 0, 99)
+    #print("quantity for match: {}".format(value))
+    print(d3_find_min_distance_wire_crossing(program))
