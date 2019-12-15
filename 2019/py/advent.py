@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from copy import deepcopy
 import logging
 from util import get_things_from_file, DataTypes
@@ -14,8 +15,13 @@ class NegativeModuleMassException(Exception):
 
 class InvalidOpcodeException(Exception):
     pass
-    
+
+
 class TargetValuesNotFound(Exception):
+    pass
+
+
+class IntersectionNotFound(Exception):
     pass
 
 
@@ -73,7 +79,7 @@ def d2_compute_program(program):
     position 3: position at which to store operation result
     Once a command has been process, increment pointer by
     4 and execute the next instruction set
-    Modify program in place. 
+    Modify program in place.
     """
     ptr = 0
     instruction_length = 4
@@ -116,18 +122,18 @@ def d2_backcalculate_program_slow(program, target, min_value, max_value):
             d2_compute_program(program_calc)
             if program_calc[0] == target:
                 return 100 * program_calc[1] + program_calc[2]
-    
+
     raise TargetValuesNotFound("Unable to find noun and verb :(")
-            
+
 def d3_find_wire_intersections(routes):
     """
-    Return the grid location of wire intersections 
-    :param routes: list of wire routes where each route is a 
+    Return the grid location of wire intersections
+    :param routes: list of wire routes where each route is a
     comma separated list of drawing directions
     i.e. a route R1,U2,L3 is right 1, up 2, left 3
     Returns: the circuit board and a list of intersection x,y tuples
     """
-    
+
     # ugh wat
     intersections = set()
     all_routes = []
@@ -135,7 +141,7 @@ def d3_find_wire_intersections(routes):
     for route in routes:
         pos_x = 0
         pos_y = 0
-        mapped_route = set()
+        mapped_route = OrderedDict()
         for path in route.split(','):
             x_range_min = None
             x_range_max = None
@@ -143,7 +149,7 @@ def d3_find_wire_intersections(routes):
             y_range_max = None
             # for each step along a route, check if it is
             # in the circuit_board already. if so, add that
-            # position to the intersections. If not, 
+            # position to the intersections. If not,
             # add that position to the circuit_board
             delta = int(path[1:])
             direction = path[0]
@@ -167,30 +173,28 @@ def d3_find_wire_intersections(routes):
                 y_range_max = pos_y - delta - 1
                 incr = -1
                 pos_y -= delta
-            
+
             if x_range_min is not None:
                 for i in range(x_range_min, x_range_max, incr):
                     pos = (i, pos_y)
-                    match = [r for r in all_routes if pos in r]
+                    match = [r for r in all_routes if pos in r.keys()]
                     if match:
                         logging.debug("adding intersection: {}".format(pos))
                         intersections.add(pos)
-                    else:
-                        mapped_route.add(pos)
+                    mapped_route[pos] = None
             elif y_range_min is not None:
                 for i in range(y_range_min, y_range_max, incr):
                     pos = (pos_x, i)
-                    match = [r for r in all_routes if pos in r]
+                    match = [r for r in all_routes if pos in r.keys()]
                     if match:
                         logging.debug("adding intersection: {}".format(pos))
                         intersections.add(pos)
-                    else:
-                        mapped_route.add(pos)
-        
+                    mapped_route[pos] = None
+
         all_routes.append(mapped_route)
     intersections.remove(origin)
     return all_routes, intersections
-    
+
 def d3_compute_closest_distance(intersections):
     """
     Find the shortest manhattan distance from the
@@ -212,9 +216,51 @@ def d3_compute_closest_distance(intersections):
                 logging.debug("updating min_distance to {}".format(min_distance))
                 min_distance = distance
         return min_distance
-        
+
+def d3_compute_steps(board, intersection):
+    """
+    Given a set of intersections, return the minimum number of
+    steps taken along the path specified in board to reach each intersection
+    :param board: list of x,y tuples designating a wire path
+    :param intersections: set of x,y tuples where wires have crossed
+    Returns integer steps to an intersection
+    """
+    step_counter = 0
+    for step in board.keys():
+        if step == intersection:
+            logging.debug("steps to {}: {}".format(intersection, step_counter))
+            return step_counter
+        step_counter += 1
+
+    raise IntersectionNotFound("This should never happen, bit if it does"
+    "its because intersection {} wasnt found in the supplied board".format(intersection))
+
+
+
+def d3_minimize_signal_delay(routes):
+    boards, intersections = d3_find_wire_intersections(routes)
+    min_intersection = 0
+    min_steps = 0
+    for intr in intersections:
+        steps = 0
+        if min_intersection == 0:
+            min_intersection = intr
+        for i in range(len(boards)):
+            board = boards[i]
+            steps += d3_compute_steps(board, intr)
+
+        if min_steps == 0:
+            min_steps = steps
+        elif min_steps > steps:
+            min_steps = steps
+            min_intersection = intr
+    return min_intersection, min_steps
+
+
+
+
 def d3_find_min_distance_wire_crossing(routes):
-    board, intersections = d3_find_wire_intersections(routes)
+    boards, intersections = d3_find_wire_intersections(routes)
     return d3_compute_closest_distance(intersections)
 
 if __name__ == "__main__":
@@ -227,4 +273,7 @@ if __name__ == "__main__":
     #print("Value at position 0 of program result: {}".format(program[0]))
     #value = d2_backcalculate_program_slow(program, 19690720, 0, 99)
     #print("quantity for match: {}".format(value))
-    print(d3_find_min_distance_wire_crossing(program))
+
+    # d3 p2 wrong answers:
+    ## 14740
+    print(d3_minimize_signal_delay(program))
