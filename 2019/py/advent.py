@@ -219,10 +219,10 @@ def d3_compute_closest_distance(intersections):
 
 def d3_compute_steps(board, intersection):
     """
-    Given a set of intersections, return the minimum number of
+    Given an intersection, return the minimum number of
     steps taken along the path specified in board to reach each intersection
-    :param board: list of x,y tuples designating a wire path
-    :param intersections: set of x,y tuples where wires have crossed
+    :param board: list of (x,y) tuples designating a wire path
+    :param intersection: (x,y) tuple where wires have crossed
     Returns integer steps to an intersection
     """
     step_counter = 0
@@ -260,6 +260,7 @@ def d3_minimize_signal_delay(routes):
 
 
 def d3_find_min_distance_wire_crossing(routes):
+    # this works for the examples but not the actual input! :(
     boards, intersections = d3_find_wire_intersections(routes)
     return d3_compute_closest_distance(intersections)
 
