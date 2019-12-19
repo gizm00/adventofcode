@@ -1,34 +1,32 @@
 
 
 object Day4 extends App {
-  val MIN = 34
-  val MAX = 56
+  val MIN = 265275
+  val MAX = 781584
 
-  def hasSameAdjacent(i: Int): Boolean = {
-    val vecOfI = i.toString.map(_.asDigit)
-    // is there a way to map over vecOfI and compare i, i+1?
-    val adjacents = vecOfI.sliding(2).toList
-      .filter(n => n(0) == n(1))
-      .map(_(0))
-
-    adjacents.length > 0
+  def hasSameAdjacent(digits: String): Boolean = {
+    digits.zip(digits.tail).exists {
+      case (i,j) => i == j
+    }
   }
 
-  def isNotDecreasing(i: Int): Boolean = {
-    val vecOfI = i.toString.map(_.asDigit)
-    val checkSameOrIncreasing = vecOfI.sliding(2)
-      .filter(n => n(0) <= n(1))
-      .map(_(0)).toList
+  def isDecreasing(digits: String): Boolean = {
+    digits.zip(digits.tail).exists {
+      case (i,j) => i > j
+    }
+  }
 
-    // hm, checkSameOrIncreasing will be missing the last digit, so
-    // how to compare to vecOfI?
+  def isManyEquals(digits: String): Boolean = {
+    digits.zip(digits.tail).zip(digits.tail.tail).exists { case ((i, j), k) => (i == j && j == k) }
   }
 
   def getPasswords(minimum: Int, maximum: Int) : List[Int] = {
     val range = List.range(minimum, maximum)
     range
-      .filter(hasSameAdjacent(_))
-      .filter(isNotDecreasing(_))
+      .map(_.toString.map(_.asDigit))
+      .filter(hasSameAdjacent)
+      .filter(!isDecreasing)
+      .filter(!isManyEquals)
   }
 
   print(s"Found ${getPasswords(MIN, MAX).length} passwords")
