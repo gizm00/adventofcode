@@ -1,5 +1,5 @@
-import scala.util.{Try, Using}
 import scala.io.Source
+import scala.annotation.tailrec
 
 object Day1 extends App {
   def SOURCE_FILE = "/Users/gizmo/dev/adventofcode/2019/input_files/d1_input_module_masses.txt"
@@ -13,18 +13,21 @@ object Day1 extends App {
 
   def readFromFile(fileName:String): List[String] = {
     // Figure out how to wrap in Using
-    return Source.fromFile(fileName).getLines.toList
+    Source.fromFile(fileName).getLines.toList
   }
 
+  @tailrec  // need this to tell scala that this is a tail recursive function
   def calcFuel(moduleMass:Int, acc:Int) : Int = {
     if (moduleMass == 0)
-      return acc
+      acc
     val fuelRequired = (moduleMass/3).toInt - 2
     if (fuelRequired <= 0)
-      return acc
+      acc
     else
-      return calcFuel(fuelRequired, acc + fuelRequired)
+      calcFuel(fuelRequired, acc + fuelRequired)
   }
+
+  // Todo - property based testing
 
 }
 
