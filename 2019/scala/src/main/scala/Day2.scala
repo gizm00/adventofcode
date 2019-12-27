@@ -8,17 +8,7 @@ object Day2 extends App{
   def executeIntcodeProgram(memory: ArrayBuffer[Int]) = {
     var memPtr = 0
     while (memory(memPtr) != 99 && memPtr < memory.length) {
-      memory(memPtr) match {
-        case 1 => {
-          memory(memory(memPtr+3)) = memory(memory(memPtr+2)) + memory(memory(memPtr+1))
-          memPtr += 3
-        }
-        case 2 => {
-          memory(memory(memPtr+3)) = memory(memory(memPtr+2)) * memory(memory(memPtr+1))
-          memPtr += 3
-        }
-        case _ => println(s"opcode ${memory(memPtr)} undefined")
-      }
+      memPtr = executeIntcodeCommand(memory, memPtr)
 
       // memPtr will be at the end of the last instruction, increment
       memPtr += 1
@@ -30,40 +20,32 @@ object Day2 extends App{
     memory(2) = 2
   }
 
-  def executeIntcodeCommand(memory: ArrayBuffer[Int], memPtr: Int): (ArrayBuffer[Int], Int) = {
+  def executeIntcodeCommand(memory: ArrayBuffer[Int], memPtr: Int): Int = {
     memory(memPtr) match {
       case 1 => doOp1(memory, memPtr)
       case 2 => doOp2(memory, memPtr)
-      case _ => (memory, memPtr)
+      case _ => memPtr
     }
   }
 
 
 
-  def doOp1(memory: ArrayBuffer[Int], memPtr: Int): (ArrayBuffer[Int], Int) = {
+  def doOp1(memory: ArrayBuffer[Int], memPtr: Int): Int = {
     /*
     Add items at pointer +1 and pointer +2, putting result into
     pointer+3
     */
-    // deal with exception handling later
-    // if memory.length - memPtr < 4:
-    // memptr will be pointing at the opcode 1
-    memory(memPtr+3) = memory(memPtr+2) + memory(memPtr+1)
-    val curMemPtr = memPtr + 3
-    (memory, curMemPtr)
+    memory(memory(memPtr+3)) = memory(memory(memPtr+2)) + memory(memory(memPtr+1))
+    memPtr + 3
   }
 
-  def doOp2(memory: ArrayBuffer[Int], memPtr: Int): (ArrayBuffer[Int], Int) = {
+  def doOp2(memory: ArrayBuffer[Int], memPtr: Int): Int = {
     /*
     Multiply items at pointer +1 and pointer +2, putting result into
     pointer+3
     */
-    // deal with exception handling later
-    // if memory.length - memPtr < 4:
-    // memptr will be pointing at the opcode 1
-    memory(memPtr+3) = memory(memPtr+2) * memory(memPtr+1)
-    val curMemPtr = memPtr + 3
-    (memory, curMemPtr)
+    memory(memory(memPtr+3)) = memory(memory(memPtr+2)) * memory(memory(memPtr+1))
+    memPtr + 3
   }
 
   restoreGravityAssist(day2_input)
